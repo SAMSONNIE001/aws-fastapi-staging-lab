@@ -4,7 +4,7 @@ app = FastAPI()
 
 @app.get("/")
 def home():
-    return {"message": "AWS staging deployment is working"}
+    return {"message": "Elastic Beanstalk CI/CD deployment is working"}
 
 @app.get("/health")
 def health():
