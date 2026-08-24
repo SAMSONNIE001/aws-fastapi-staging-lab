@@ -21,7 +21,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::085647326626:role/github-actions-elastic-beanstalk-role
-          aws-region: us-east-1
+          aws-region: eu-west-2
 
       - name: Create deployment package
         run: |
