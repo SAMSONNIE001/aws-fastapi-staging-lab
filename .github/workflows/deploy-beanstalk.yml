@@ -1,0 +1,55 @@
+name: Deploy to Elastic Beanstalk
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::085647326626:role/github-actions-elastic-beanstalk-role
+          aws-region: us-east-1
+
+      - name: Create deployment package
+        run: |
+          zip -r deployment.zip . \
+            -x ".git/*" \
+            -x ".github/*" \
+            -x "deployment.zip"
+
+      - name: Get Elastic Beanstalk S3 bucket
+        id: bucket
+        run: |
+          BUCKET=$(aws elasticbeanstalk create-storage-location --query S3Bucket --output text)
+          echo "bucket=$BUCKET" >> "$GITHUB_OUTPUT"
+
+      - name: Upload application package
+        run: |
+          aws s3 cp deployment.zip \
+          s3://${{ steps.bucket.outputs.bucket }}/fastapi-${{ github.sha }}.zip
+
+      - name: Create Elastic Beanstalk version
+        run: |
+          aws elasticbeanstalk create-application-version \
+            --application-name fastapi-beanstalk-staging \
+            --version-label ${{ github.sha }} \
+            --source-bundle S3Bucket=${{ steps.bucket.outputs.bucket }},S3Key=fastapi-${{ github.sha }}.zip
+
+      - name: Deploy to Elastic Beanstalk
+        run: |
+          aws elasticbeanstalk update-environment \
+            --environment-name fastapi-beanstalk-env \
+            --version-label ${{ github.sha }}
