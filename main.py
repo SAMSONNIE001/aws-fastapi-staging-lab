@@ -1,8 +1,12 @@
 import os
 import json
+import logging
 import boto3
 from botocore.exceptions import ClientError
 from fastapi import FastAPI
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
@@ -27,9 +31,12 @@ def get_demo_api_key():
 
         secret = json.loads(response["SecretString"])
 
+        logger.info("Secret successfully loaded from Secrets Manager")
+
         return secret.get("DEMO_API_KEY")
 
-    except (ClientError, KeyError, json.JSONDecodeError):
+    except (ClientError, KeyError, json.JSONDecodeError) as error:
+        logger.error("Failed to load secret: %s", error)
         return None
 
 
@@ -38,6 +45,8 @@ DEMO_API_KEY = get_demo_api_key()
 
 @app.get("/")
 def home():
+    logger.info("Home endpoint requested")
+
     return {
         "message": "Elastic Beanstalk CI/CD deployment is working"
     }
@@ -45,6 +54,8 @@ def home():
 
 @app.get("/health")
 def health():
+    logger.info("Health endpoint requested")
+
     return {
         "status": "ok",
         "environment": APP_ENV,
