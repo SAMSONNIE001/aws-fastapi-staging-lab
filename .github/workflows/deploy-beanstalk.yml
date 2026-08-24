@@ -17,28 +17,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Temporary debugging step.
-      # This shows the exact OIDC "sub" value GitHub sends to AWS.
-      - name: Inspect GitHub OIDC claims
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const token = await core.getIDToken('sts.amazonaws.com');
-
-            const payloadPart = token.split('.')[1];
-            const normalized = payloadPart
-              .replace(/-/g, '+')
-              .replace(/_/g, '/');
-
-            const payload = JSON.parse(
-              Buffer.from(normalized, 'base64').toString('utf8')
-            );
-
-            console.log('OIDC audience:', payload.aud);
-            console.log('OIDC subject:', payload.sub);
-            console.log('Repository:', context.repo.owner + '/' + context.repo.repo);
-            console.log('Git ref:', context.ref);
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
